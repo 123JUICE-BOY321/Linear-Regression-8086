@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Linear Regression 8086</title>
+        <link rel="icon" type="image/png" href="Assets/Favicon.png">
+        <link rel="stylesheet" href="https://v8.js-dos.com/latest/js-dos.css">
+        <script src="https://v8.js-dos.com/latest/js-dos.js"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-white min-h-screen flex flex-col items-center gap-2 selection:bg-red-100 selection:text-red-900">
+        <div class="w-full flex justify-center">
+            <img 
+                src="Assets/Linear Regression 8086.png" 
+                alt="Linear Regression 8086 Banner" 
+                class="h-24 lg:h-32 object-contain"
+            >
+        </div>
+        <div id="status-pill" class="px-4 py-2 rounded-full border border-zinc-200 flex items-center gap-3">
+            <span id="status-dot" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+            <span id="status-text" class="text-sm font-bold font-mono text-zinc-600">INITIALIZING CONNECTION...</span>
+        </div>
+        <div id="dos-root" class="w-[90vw] md:w-[80vw] lg:w-[60vw] aspect-[16/10] rounded bg-black shadow-xl shadow-red-400/70 overflow-hidden mb-10"></div>
+        <script>
+            const PROGRAM_URL = "https://raw.githubusercontent.com/123JUICE-BOY321/Linear-Regression-8086/main/linreg.exe";
+            const PROGRAM_FILENAME = "linreg.exe";
+            const statusText = document.getElementById("status-text");
+            const statusDot = document.getElementById("status-dot");
+            window.addEventListener("load", init);
+            async function init() {
+                try {
+                    updateStatus("DOWNLOADING BINARY...", "yellow");
+                    const response = await fetch(PROGRAM_URL);
+                    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+                    const binaryData = new Uint8Array(await response.arrayBuffer());
+                    updateStatus("STARTING EMULATOR...", "blue");
+                    Dos(document.getElementById("dos-root"), {
+                        autoStart: true, 
+                        dosboxConf: `
+                            [autoexec]
+                            mount c .
+                            c:
+                            ${PROGRAM_FILENAME}
+                        `,
+                        initFs: [{ path: PROGRAM_FILENAME, contents: binaryData }],
+                        onEvent: (event) => {
+                            if (event === "ci-ready") {
+                                updateStatus("SYSTEM READY", "green");
+                            }
+                        }
+                    });
+                } catch (err) {
+                    updateStatus(err.message, "red");
+                    console.error(err);
+                }
+            }
+            function updateStatus(text, color) {
+                statusText.textContent = text;
+                statusDot.className = `w-2 h-2 rounded-full animate-pulse bg-${color === "red" ? "red-600" : color === "green" ? "green-500" : color === "blue" ? "blue-500" : "yellow-500"}`;
+            }
+        </script>
+    </body>
+</html>
